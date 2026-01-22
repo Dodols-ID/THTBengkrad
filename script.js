@@ -1,6 +1,53 @@
 // color transition
 
-document.addEventListener('DOMContentLoaded', function() {
+// Function to load section data from Supabase
+async function loadSectionData() {
+    try {
+        const { data: sections, error } = await window.supabaseClient
+            .from('sections')
+            .select('*')
+            .order('section_id');
+
+        if (error) {
+            console.error('Error fetching section data:', error);
+            return;
+        }
+
+        // Populate each section with data from database
+        sections.forEach(sectionData => {
+            const sectionElement = document.getElementById(sectionData.section_id);
+            if (sectionElement) {
+                const container = sectionElement.querySelector('.container');
+                if (container) {
+                    const titleElement = container.querySelector('h1');
+                    const imageElement = container.querySelector('img');
+                    const contentElement = container.querySelector('p');
+
+                    if (titleElement) titleElement.textContent = sectionData.title;
+                    if (imageElement) {
+                        imageElement.src = sectionData.image_url || '#';
+                        imageElement.alt = `${sectionData.title} Image`;
+                    }
+                    if (contentElement) contentElement.textContent = sectionData.content;
+
+                    // Update navigation link text
+                    const navLink = document.querySelector(`aside a[href="#${sectionData.section_id}"]`);
+                    if (navLink) {
+                        navLink.textContent = sectionData.title;
+                    }
+                }
+            }
+        });
+
+        console.log('Section data loaded successfully');
+    } catch (error) {
+        console.error('Error loading section data:', error);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // Load data from Supabase first
+    await loadSectionData();
     const sections = document.querySelectorAll('section');
 
     const sectionColors = [
