@@ -153,6 +153,7 @@
         const ADMIN_PASSWORD = 'admin123'; // Change this to a secure password
 
         let sectionsData = [];
+        let imagesData = {};
 
         // Check if already logged in
         if (localStorage.getItem('admin_logged_in') === 'true') {
@@ -180,27 +181,55 @@
             document.getElementById('admin-content').style.display = 'block';
 
             try {
-                const { data: sections, error } = await window.supabaseClient
+                // Load sections data
+                const { data: sections, error: sectionsError } = await window.supabaseClient
                     .from('sections')
                     .select('*')
                     .order('section_id');
 
-                if (error) {
-                    console.error('Error fetching sections:', error);
+                if (sectionsError) {
+                    console.error('Error fetching sections:', sectionsError);
                     return;
                 }
 
+                // Load images data
+                const { data: images, error: imagesError } = await window.supabaseClient
+                    .from('section_images')
+                    .select('*')
+                    .order('section_id, image_order');
+
+                if (imagesError) {
+                    console.error('Error fetching images:', imagesError);
+                    // Continue anyway - sections might still work
+                }
+
+                // Group images by section
+                const imagesBySection = {};
+                if (images) {
+                    images.forEach(img => {
+                        if (!imagesBySection[img.section_id]) {
+                            imagesBySection[img.section_id] = [];
+                        }
+                        imagesBySection[img.section_id].push(img);
+                    });
+                }
+
                 sectionsData = sections;
-                renderSections(sections);
+                imagesData = imagesBySection;
+                renderSections(sections, imagesBySection);
             } catch (error) {
                 console.error('Error loading admin panel:', error);
             }
         }
 
-        function renderSections(sections) {
+        function renderSections(sections, imagesBySection) {
             const container = document.getElementById('sections-container');
 
-            container.innerHTML = sections.map(section => `
+            container.innerHTML = sections.map(section => {
+                const sectionImages = imagesBySection[section.section_id] || [];
+                const imageUrls = sectionImages.map(img => img.image_url).join('\n');
+
+                return `
                 <div class="section-editor">
                     <h3>Section: ${section.section_id}</h3>
                     <form onsubmit="saveSection(event, '${section.section_id}')">
@@ -215,15 +244,18 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="image-${section.section_id}">Image URL:</label>
-                            <input type="url" id="image-${section.section_id}" value="${section.image_url || ''}">
+                            <label for="images-${section.section_id}">Images (one URL per line):</label>
+                            <textarea id="images-${section.section_id}" placeholder="https://example.com/image1.jpg
+https://example.com/image2.jpg
+https://example.com/image3.jpg" rows="4">${imageUrls}</textarea>
+                            <small style="color: #666; font-size: 0.9em;">Enter each image URL on a new line. First image will be shown initially.</small>
                         </div>
 
                         <button type="submit" class="save-btn">Save Changes</button>
                         <div id="status-${section.section_id}"></div>
                     </form>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         async function saveSection(event, sectionId) {
@@ -239,21 +271,71 @@
             try {
                 const title = document.getElementById(`title-${sectionId}`).value;
                 const content = document.getElementById(`content-${sectionId}`).value;
-                const imageUrl = document.getElementById(`image-${sectionId}`).value;
+                const imageUrlsText = document.getElementById(`images-${sectionId}`).value;
 
-                const { error } = await window.supabaseClient
+                // Parse image URLs (one per line, filter empty lines)
+                const imageUrls = imageUrlsText
+                    .split('\n')
+                    .map(url => url.trim())
+                    .filter(url => url.length > 0);
+
+                // Update section data (title and content)
+                const { error: sectionError } = await window.supabaseClient
                     .from('sections')
                     .update({
                         title,
                         content,
-                        image_url: imageUrl,
                         updated_at: new Date().toISOString()
                     })
                     .eq('section_id', sectionId);
 
-                if (error) {
-                    throw error;
+                if (sectionError) {
+                    throw sectionError;
                 }
+
+                // Handle images: delete existing and insert new ones
+                if (imageUrls.length > 0) {
+                    // Delete existing images for this section
+                    await window.supabaseClient
+                        .from('section_images')
+                        .delete()
+                        .eq('section_id', sectionId);
+
+                    // Insert new images
+                    const imagesToInsert = imageUrls.map((url, index) => ({
+                        section_id: sectionId,
+                        image_url: url,
+                        image_order: index + 1
+                    }));
+
+                    const { error: imageError } = await window.supabaseClient
+                        .from('section_images')
+                        .insert(imagesToInsert);
+
+                    if (imageError) {
+                        throw imageError;
+                    }
+                } else {
+                    // No images provided, just delete existing ones
+                    await window.supabaseClient
+                        .from('section_images')
+                        .delete()
+                        .eq('section_id', sectionId);
+                }
+
+                // Update local data
+                const sectionIndex = sectionsData.findIndex(s => s.section_id === sectionId);
+                if (sectionIndex !== -1) {
+                    sectionsData[sectionIndex].title = title;
+                    sectionsData[sectionIndex].content = content;
+                }
+
+                // Update images data
+                imagesData[sectionId] = imageUrls.map((url, index) => ({
+                    section_id: sectionId,
+                    image_url: url,
+                    image_order: index + 1
+                }));
 
                 statusDiv.innerHTML = '<div class="status-message success">Changes saved successfully!</div>';
                 setTimeout(() => {

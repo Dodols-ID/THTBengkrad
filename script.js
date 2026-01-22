@@ -1,5 +1,162 @@
 // color transition
 
+// Global variable to store images by section
+let sectionImagesData = {};
+
+// Function to load section images from Supabase
+async function loadSectionImages() {
+    try {
+        const { data: images, error } = await window.supabaseClient
+            .from('section_images')
+            .select('*')
+            .order('section_id, image_order');
+
+        if (error) {
+            console.error('Error loading images:', error);
+            return;
+        }
+
+        // Group images by section
+        sectionImagesData = {};
+        images.forEach(img => {
+            if (!sectionImagesData[img.section_id]) {
+                sectionImagesData[img.section_id] = [];
+            }
+            sectionImagesData[img.section_id].push(img);
+        });
+
+        // Initialize carousels for sections that have images
+        Object.keys(sectionImagesData).forEach(sectionId => {
+            initializeCarousel(sectionId, sectionImagesData[sectionId]);
+        });
+
+        console.log('Section images loaded successfully');
+    } catch (error) {
+        console.error('Error loading section images:', error);
+    }
+}
+
+// Carousel initialization and controls
+function initializeCarousel(sectionId, images) {
+    const carousel = document.querySelector(`[data-section="${sectionId}"]`);
+    if (!carousel || images.length === 0) return;
+
+    const imgElement = carousel.querySelector('.carousel-image');
+    const prevBtn = carousel.querySelector('.prev-btn');
+    const nextBtn = carousel.querySelector('.next-btn');
+    const dotsContainer = carousel.querySelector('.carousel-dots');
+
+    let currentIndex = 0;
+    let autoPlayInterval = null;
+
+    // Set initial image
+    updateCarouselImage();
+
+    // Create dots
+    createCarouselDots();
+
+    // Navigation functions
+    function updateCarouselImage() {
+        if (images[currentIndex]) {
+            imgElement.style.opacity = '0';
+
+            setTimeout(() => {
+                imgElement.src = images[currentIndex].image_url;
+                imgElement.alt = `Section ${sectionId} Image ${currentIndex + 1}`;
+                imgElement.style.opacity = '1';
+            }, 150);
+
+            // Update dots
+            updateActiveDot();
+        }
+    }
+
+    function createCarouselDots() {
+        dotsContainer.innerHTML = '';
+        images.forEach((_, index) => {
+            const dot = document.createElement('div');
+            dot.className = `carousel-dot ${index === 0 ? 'active' : ''}`;
+            dot.addEventListener('click', () => goToImage(index));
+            dotsContainer.appendChild(dot);
+        });
+    }
+
+    function updateActiveDot() {
+        const dots = dotsContainer.querySelectorAll('.carousel-dot');
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentIndex);
+        });
+    }
+
+    function goToImage(index) {
+        currentIndex = index;
+        updateCarouselImage();
+        resetAutoPlay();
+    }
+
+    function nextImage() {
+        currentIndex = (currentIndex + 1) % images.length;
+        updateCarouselImage();
+        resetAutoPlay();
+    }
+
+    function prevImage() {
+        currentIndex = (currentIndex - 1 + images.length) % images.length;
+        updateCarouselImage();
+        resetAutoPlay();
+    }
+
+    function resetAutoPlay() {
+        if (autoPlayInterval) {
+            clearInterval(autoPlayInterval);
+            startAutoPlay();
+        }
+    }
+
+    function startAutoPlay() {
+        // Optional: Auto-play every 5 seconds
+        autoPlayInterval = setInterval(nextImage, 5000);
+    }
+
+    // Event listeners
+    if (prevBtn) prevBtn.addEventListener('click', prevImage);
+    if (nextBtn) nextBtn.addEventListener('click', nextImage);
+
+    // Keyboard navigation (arrow keys)
+    function handleKeyPress(e) {
+        // Only respond to arrow keys when carousel is visible
+        const rect = carousel.getBoundingClientRect();
+        const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+
+        if (isVisible) {
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                nextImage();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevImage();
+            }
+        }
+    }
+
+    document.addEventListener('keydown', handleKeyPress);
+
+    // Start auto-play
+    startAutoPlay();
+
+    // Pause auto-play on hover
+    carousel.addEventListener('mouseenter', () => {
+        if (autoPlayInterval) {
+            clearInterval(autoPlayInterval);
+            autoPlayInterval = null;
+        }
+    });
+
+    carousel.addEventListener('mouseleave', () => {
+        startAutoPlay();
+    });
+}
+
 // Function to load section data from Supabase
 async function loadSectionData() {
     try {
@@ -48,6 +205,7 @@ async function loadSectionData() {
 document.addEventListener('DOMContentLoaded', async function() {
     // Load data from Supabase first
     await loadSectionData();
+    await loadSectionImages();
     const sections = document.querySelectorAll('section');
 
     const sectionColors = [

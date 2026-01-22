@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data:; font-src 'self' https:;">
     <title>cerita-cerita dikit</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -27,7 +28,12 @@
     <section id="section1">
             <div class="container">
                 <h1>Prolog</h1>
-                <img src="#" alt="Placeholder Image 1" class="placeholder-image">
+                <div class="image-carousel" data-section="section1">
+                    <button class="carousel-btn prev-btn" aria-label="Previous image">‹</button>
+                    <img src="#" alt="Section 1 Image" class="carousel-image">
+                    <button class="carousel-btn next-btn" aria-label="Next image">›</button>
+                    <div class="carousel-dots"></div>
+                </div>
                 <p>text placeholder</p>
             </div>
     </section>
@@ -35,7 +41,12 @@
     <section id="section2">
         <div class="container">
             <h1>chap1</h1>
-            <img src="#" alt="Placeholder Image 1" class="placeholder-image">
+            <div class="image-carousel" data-section="section2">
+                <button class="carousel-btn prev-btn" aria-label="Previous image">‹</button>
+                <img src="#" alt="Section 2 Image" class="carousel-image">
+                <button class="carousel-btn next-btn" aria-label="Next image">›</button>
+                <div class="carousel-dots"></div>
+            </div>
             <p>text placeholder</p>
         </div>
     </section>
@@ -43,7 +54,12 @@
     <section id="section3">
         <div class="container">
             <h1>chap2</h1>
-            <img src="#" alt="Placeholder Image 1" class="placeholder-image">
+            <div class="image-carousel" data-section="section3">
+                <button class="carousel-btn prev-btn" aria-label="Previous image">‹</button>
+                <img src="#" alt="Section 3 Image" class="carousel-image">
+                <button class="carousel-btn next-btn" aria-label="Next image">›</button>
+                <div class="carousel-dots"></div>
+            </div>
             <p>text placeholder</p>
         </div>
     </section>
@@ -51,7 +67,12 @@
     <section id="section4">
         <div class="container">
             <h1>Epilog</h1>
-            <img src="#" alt="Placeholder Image 1" class="placeholder-image">
+            <div class="image-carousel" data-section="section4">
+                <button class="carousel-btn prev-btn" aria-label="Previous image">‹</button>
+                <img src="#" alt="Section 4 Image" class="carousel-image">
+                <button class="carousel-btn next-btn" aria-label="Next image">›</button>
+                <div class="carousel-dots"></div>
+            </div>
             <p>text placeholder</p>
         </div>
     </section>
