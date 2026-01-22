@@ -1,4 +1,4 @@
-/* General Styles */
+/*style general*/
 * {
     margin: 0;
     padding: 0;
@@ -14,7 +14,7 @@ body {
     min-height: 100vh;
 }
 
-/* Header Styles */
+/*style Header*/
 header {
     background-color: #f8f9fa;
     padding: 1rem;
@@ -40,7 +40,7 @@ header button:hover {
     background-color: #0056b3;
 }
 
-/* Aside Navigation */
+/*style nav sidebar*/
 aside {
     position: fixed;
     left: 0;
@@ -79,13 +79,13 @@ aside a:hover {
     background-color: #e9ecef;
 }
 
-/* Main Content Area */
+/*style body*/
 main {
     margin-left: 220px;
     margin-top: 80px;
 }
 
-/* Section Styles with Transparent Backgrounds */
+/*style per section*/
 #section1, #section2, #section3, #section4 {
     min-height: 100vh;
     display: flex;
@@ -95,7 +95,7 @@ main {
     position: relative;
 }
 
-/* Transition zones between sections */
+/*zona transisi*/
 #section1::after,
 #section2::after,
 #section3::after {
@@ -110,7 +110,7 @@ main {
     z-index: 1;
 }
 
-/* Active section styling */
+/*styling container active*/
 section.active {
     transform: scale(1.01);
     filter: brightness(1.05);
@@ -121,7 +121,7 @@ section.active .container {
     transform: translateY(-3px);
 }
 
-/* Container Styles */
+/*style container*/
 .container {
     max-width: 800px;
     padding: 2rem;
@@ -153,7 +153,7 @@ section.active .container {
     line-height: 1.8;
 }
 
-/* Hover Effects for Sections */
+/*hover effectd*/
 section:hover {
     transform: scale(1.01);
     filter: brightness(1.05);
