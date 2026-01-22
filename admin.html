@@ -227,7 +227,15 @@
 
             container.innerHTML = sections.map(section => {
                 const sectionImages = imagesBySection[section.section_id] || [];
-                const imageUrls = sectionImages.map(img => img.image_url).join('\n');
+                // Ensure at least one empty input for new sections
+                const displayImages = sectionImages.length > 0 ? sectionImages : [{ image_url: '' }];
+
+                const imageInputsHtml = displayImages.map((img, index) => `
+                    <div class="image-input-group" data-index="${index}">
+                        <input type="url" class="image-url-input" value="${img.image_url || ''}" placeholder="https://example.com/image.jpg">
+                        <button type="button" class="remove-image-btn" onclick="removeImageInput('${section.section_id}', ${index})" ${displayImages.length <= 1 ? 'disabled' : ''}>×</button>
+                    </div>
+                `).join('');
 
                 return `
                 <div class="section-editor">
@@ -239,16 +247,12 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="content-${section.section_id}">Content:</label>
-                            <textarea id="content-${section.section_id}" required>${section.content || ''}</textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="images-${section.section_id}">Images (one URL per line):</label>
-                            <textarea id="images-${section.section_id}" placeholder="https://example.com/image1.jpg
-https://example.com/image2.jpg
-https://example.com/image3.jpg" rows="4">${imageUrls}</textarea>
-                            <small style="color: #666; font-size: 0.9em;">Enter each image URL on a new line. First image will be shown initially.</small>
+                            <label>Images:</label>
+                            <div class="images-container" id="images-container-${section.section_id}">
+                                ${imageInputsHtml}
+                            </div>
+                            <button type="button" class="add-image-btn" onclick="addImageInput('${section.section_id}')">+ Add Image</button>
+                            <small style="color: #666; font-size: 0.9em;">Add image URLs. Images will cycle automatically on the main site.</small>
                         </div>
 
                         <button type="submit" class="save-btn">Save Changes</button>
@@ -256,6 +260,111 @@ https://example.com/image3.jpg" rows="4">${imageUrls}</textarea>
                     </form>
                 </div>
             `}).join('');
+
+            // Add CSS for the new image input styling
+            if (!document.getElementById('dynamic-image-styles')) {
+                const style = document.createElement('style');
+                style.id = 'dynamic-image-styles';
+                style.textContent = `
+                    .images-container {
+                        margin-bottom: 10px;
+                    }
+                    .image-input-group {
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 5px;
+                    }
+                    .image-url-input {
+                        flex: 1;
+                        padding: 8px;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                        font-family: inherit;
+                    }
+                    .remove-image-btn {
+                        background: #dc3545;
+                        color: white;
+                        border: none;
+                        padding: 8px 12px;
+                        margin-left: 5px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        font-weight: bold;
+                    }
+                    .remove-image-btn:hover:not(:disabled) {
+                        background: #c82333;
+                    }
+                    .remove-image-btn:disabled {
+                        background: #ccc;
+                        cursor: not-allowed;
+                    }
+                    .add-image-btn {
+                        background: #28a745;
+                        color: white;
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 14px;
+                    }
+                    .add-image-btn:hover {
+                        background: #218838;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        function addImageInput(sectionId) {
+            const container = document.getElementById(`images-container-${sectionId}`);
+            const imageGroups = container.querySelectorAll('.image-input-group');
+            const newIndex = imageGroups.length;
+
+            const newInputHtml = `
+                <div class="image-input-group" data-index="${newIndex}">
+                    <input type="url" class="image-url-input" value="" placeholder="https://example.com/image.jpg">
+                    <button type="button" class="remove-image-btn" onclick="removeImageInput('${sectionId}', ${newIndex})">×</button>
+                </div>
+            `;
+
+            container.insertAdjacentHTML('beforeend', newInputHtml);
+
+            // Update remove buttons (enable them if we now have more than 1)
+            updateRemoveButtons(sectionId);
+        }
+
+        function removeImageInput(sectionId, indexToRemove) {
+            const container = document.getElementById(`images-container-${sectionId}`);
+            const imageGroups = container.querySelectorAll('.image-input-group');
+
+            if (imageGroups.length <= 1) return; // Don't remove if it's the last one
+
+            // Remove the specific input group
+            const groupToRemove = container.querySelector(`[data-index="${indexToRemove}"]`);
+            if (groupToRemove) {
+                groupToRemove.remove();
+            }
+
+            // Re-index remaining inputs
+            const remainingGroups = container.querySelectorAll('.image-input-group');
+            remainingGroups.forEach((group, newIndex) => {
+                group.setAttribute('data-index', newIndex);
+                const removeBtn = group.querySelector('.remove-image-btn');
+                removeBtn.setAttribute('onclick', `removeImageInput('${sectionId}', ${newIndex})`);
+            });
+
+            updateRemoveButtons(sectionId);
+        }
+
+        function updateRemoveButtons(sectionId) {
+            const container = document.getElementById(`images-container-${sectionId}`);
+            const removeButtons = container.querySelectorAll('.remove-image-btn');
+            const shouldDisable = removeButtons.length <= 1;
+
+            removeButtons.forEach(btn => {
+                btn.disabled = shouldDisable;
+            });
         }
 
         async function saveSection(event, sectionId) {
@@ -271,12 +380,12 @@ https://example.com/image3.jpg" rows="4">${imageUrls}</textarea>
             try {
                 const title = document.getElementById(`title-${sectionId}`).value;
                 const content = document.getElementById(`content-${sectionId}`).value;
-                const imageUrlsText = document.getElementById(`images-${sectionId}`).value;
 
-                // Parse image URLs (one per line, filter empty lines)
-                const imageUrls = imageUrlsText
-                    .split('\n')
-                    .map(url => url.trim())
+                // Get image URLs from dynamic input fields
+                const container = document.getElementById(`images-container-${sectionId}`);
+                const imageInputs = container.querySelectorAll('.image-url-input');
+                const imageUrls = Array.from(imageInputs)
+                    .map(input => input.value.trim())
                     .filter(url => url.length > 0);
 
                 // Update section data (title and content)
