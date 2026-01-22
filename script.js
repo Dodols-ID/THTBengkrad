@@ -47,7 +47,6 @@ function initializeCarousel(sectionId, images) {
     const dotsContainer = carousel.querySelector('.carousel-dots');
 
     let currentIndex = 0;
-    let autoPlayInterval = null;
 
     // Set initial image
     updateCarouselImage();
@@ -91,13 +90,11 @@ function initializeCarousel(sectionId, images) {
     function goToImage(index) {
         currentIndex = index;
         updateCarouselImage();
-        resetAutoPlay();
     }
 
     function nextImage() {
         currentIndex = (currentIndex + 1) % images.length;
         updateCarouselImage();
-        resetAutoPlay();
     }
 
     function prevImage() {
@@ -106,17 +103,6 @@ function initializeCarousel(sectionId, images) {
         resetAutoPlay();
     }
 
-    function resetAutoPlay() {
-        if (autoPlayInterval) {
-            clearInterval(autoPlayInterval);
-            startAutoPlay();
-        }
-    }
-
-    function startAutoPlay() {
-        // Optional: Auto-play every 5 seconds
-        autoPlayInterval = setInterval(nextImage, 5000);
-    }
 
     // Event listeners
     if (prevBtn) prevBtn.addEventListener('click', prevImage);
@@ -141,20 +127,6 @@ function initializeCarousel(sectionId, images) {
 
     document.addEventListener('keydown', handleKeyPress);
 
-    // Start auto-play
-    startAutoPlay();
-
-    // Pause auto-play on hover
-    carousel.addEventListener('mouseenter', () => {
-        if (autoPlayInterval) {
-            clearInterval(autoPlayInterval);
-            autoPlayInterval = null;
-        }
-    });
-
-    carousel.addEventListener('mouseleave', () => {
-        startAutoPlay();
-    });
 }
 
 // Function to load section data from Supabase
