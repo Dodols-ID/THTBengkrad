@@ -1,9 +1,6 @@
-// color transition
-
-// Global variable to store images by section
 let sectionImagesData = {};
 
-// Function to load section images from Supabase
+// section imagesnya supabase
 async function loadSectionImages() {
     try {
         const { data: images, error } = await window.supabaseClient
@@ -16,7 +13,7 @@ async function loadSectionImages() {
             return;
         }
 
-        // Group images by section
+        // gambar per section
         sectionImagesData = {};
         images.forEach(img => {
             if (!sectionImagesData[img.section_id]) {
@@ -25,7 +22,6 @@ async function loadSectionImages() {
             sectionImagesData[img.section_id].push(img);
         });
 
-        // Initialize carousels for sections that have images
         Object.keys(sectionImagesData).forEach(sectionId => {
             initializeCarousel(sectionId, sectionImagesData[sectionId]);
         });
@@ -36,7 +32,6 @@ async function loadSectionImages() {
     }
 }
 
-// Carousel initialization and controls
 function initializeCarousel(sectionId, images) {
     const carousel = document.querySelector(`[data-section="${sectionId}"]`);
     if (!carousel || images.length === 0) return;
@@ -48,13 +43,10 @@ function initializeCarousel(sectionId, images) {
 
     let currentIndex = 0;
 
-    // Set initial image
     updateCarouselImage();
 
-    // Create dots
     createCarouselDots();
 
-    // Navigation functions
     function updateCarouselImage() {
         if (images[currentIndex]) {
             imgElement.style.opacity = '0';
@@ -65,7 +57,6 @@ function initializeCarousel(sectionId, images) {
                 imgElement.style.opacity = '1';
             }, 150);
 
-            // Update dots
             updateActiveDot();
         }
     }
@@ -104,13 +95,10 @@ function initializeCarousel(sectionId, images) {
     }
 
 
-    // Event listeners
     if (prevBtn) prevBtn.addEventListener('click', prevImage);
     if (nextBtn) nextBtn.addEventListener('click', nextImage);
 
-    // Keyboard navigation (arrow keys)
     function handleKeyPress(e) {
-        // Only respond to arrow keys when carousel is visible
         const rect = carousel.getBoundingClientRect();
         const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
 
@@ -129,7 +117,6 @@ function initializeCarousel(sectionId, images) {
 
 }
 
-// Function to load section data from Supabase
 async function loadSectionData() {
     try {
         const { data: sections, error } = await window.supabaseClient
@@ -142,7 +129,6 @@ async function loadSectionData() {
             return;
         }
 
-        // Populate each section with data from database
         sections.forEach(sectionData => {
             const sectionElement = document.getElementById(sectionData.section_id);
             if (sectionElement) {
@@ -175,7 +161,6 @@ async function loadSectionData() {
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
-    // Load data from Supabase first
     await loadSectionData();
     await loadSectionImages();
     const sections = document.querySelectorAll('section');
@@ -224,7 +209,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.body.style.background = gradient;
     }
 
-    // helper
     function adjustLightness(hslString, adjustment) {
         const match = hslString.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
         if (!match) return hslString;

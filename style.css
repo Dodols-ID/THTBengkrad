@@ -160,7 +160,6 @@ section:hover {
     transition: all 0.3s ease;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     aside {
         display: none;
@@ -179,7 +178,6 @@ section:hover {
     }
 }
 
-/* Image Carousel Styles */
 .image-carousel {
     position: relative;
     max-width: 800px;
@@ -260,7 +258,6 @@ section:hover {
     border-color: rgba(0,0,0,0.3);
 }
 
-/* Responsive carousel adjustments */
 @media (max-width: 768px) {
     .carousel-image {
         height: 250px;

@@ -144,18 +144,15 @@
         <p>Edit the content for each section below. Changes will be saved to the database.</p>
 
         <div id="sections-container">
-            <!-- Sections will be loaded dynamically -->
         </div>
     </div>
 
     <script>
-        // Simple password protection (change this password!)
-        const ADMIN_PASSWORD = 'admin123'; // Change this to a secure password
+        const ADMIN_PASSWORD = 'admin123'; 
 
         let sectionsData = [];
         let imagesData = {};
 
-        // Check if already logged in
         if (localStorage.getItem('admin_logged_in') === 'true') {
             showAdminPanel();
         } else {
@@ -181,7 +178,6 @@
             document.getElementById('admin-content').style.display = 'block';
 
             try {
-                // Load sections data
                 const { data: sections, error: sectionsError } = await window.supabaseClient
                     .from('sections')
                     .select('*')
@@ -192,7 +188,6 @@
                     return;
                 }
 
-                // Load images data
                 const { data: images, error: imagesError } = await window.supabaseClient
                     .from('section_images')
                     .select('*')
@@ -200,10 +195,8 @@
 
                 if (imagesError) {
                     console.error('Error fetching images:', imagesError);
-                    // Continue anyway - sections might still work
                 }
 
-                // Group images by section
                 const imagesBySection = {};
                 if (images) {
                     images.forEach(img => {
@@ -227,7 +220,6 @@
 
             container.innerHTML = sections.map(section => {
                 const sectionImages = imagesBySection[section.section_id] || [];
-                // Ensure at least one empty input for new sections
                 const displayImages = sectionImages.length > 0 ? sectionImages : [{ image_url: '' }];
 
                 const imageInputsHtml = displayImages.map((img, index) => `
@@ -261,7 +253,6 @@
                 </div>
             `}).join('');
 
-            // Add CSS for the new image input styling
             if (!document.getElementById('dynamic-image-styles')) {
                 const style = document.createElement('style');
                 style.id = 'dynamic-image-styles';
@@ -330,7 +321,6 @@
 
             container.insertAdjacentHTML('beforeend', newInputHtml);
 
-            // Update remove buttons (enable them if we now have more than 1)
             updateRemoveButtons(sectionId);
         }
 
@@ -338,15 +328,13 @@
             const container = document.getElementById(`images-container-${sectionId}`);
             const imageGroups = container.querySelectorAll('.image-input-group');
 
-            if (imageGroups.length <= 1) return; // Don't remove if it's the last one
+            if (imageGroups.length <= 1) return;
 
-            // Remove the specific input group
             const groupToRemove = container.querySelector(`[data-index="${indexToRemove}"]`);
             if (groupToRemove) {
                 groupToRemove.remove();
             }
 
-            // Re-index remaining inputs
             const remainingGroups = container.querySelectorAll('.image-input-group');
             remainingGroups.forEach((group, newIndex) => {
                 group.setAttribute('data-index', newIndex);
@@ -381,14 +369,12 @@
                 const title = document.getElementById(`title-${sectionId}`).value;
                 const content = document.getElementById(`content-${sectionId}`).value;
 
-                // Get image URLs from dynamic input fields
                 const container = document.getElementById(`images-container-${sectionId}`);
                 const imageInputs = container.querySelectorAll('.image-url-input');
                 const imageUrls = Array.from(imageInputs)
                     .map(input => input.value.trim())
                     .filter(url => url.length > 0);
 
-                // Update section data (title and content)
                 const { error: sectionError } = await window.supabaseClient
                     .from('sections')
                     .update({
@@ -402,15 +388,12 @@
                     throw sectionError;
                 }
 
-                // Handle images: delete existing and insert new ones
                 if (imageUrls.length > 0) {
-                    // Delete existing images for this section
                     await window.supabaseClient
                         .from('section_images')
                         .delete()
                         .eq('section_id', sectionId);
 
-                    // Insert new images
                     const imagesToInsert = imageUrls.map((url, index) => ({
                         section_id: sectionId,
                         image_url: url,
@@ -425,21 +408,18 @@
                         throw imageError;
                     }
                 } else {
-                    // No images provided, just delete existing ones
                     await window.supabaseClient
                         .from('section_images')
                         .delete()
                         .eq('section_id', sectionId);
                 }
 
-                // Update local data
                 const sectionIndex = sectionsData.findIndex(s => s.section_id === sectionId);
                 if (sectionIndex !== -1) {
                     sectionsData[sectionIndex].title = title;
                     sectionsData[sectionIndex].content = content;
                 }
 
-                // Update images data
                 imagesData[sectionId] = imageUrls.map((url, index) => ({
                     section_id: sectionId,
                     image_url: url,
@@ -460,13 +440,11 @@
             }
         }
 
-        // Logout function (you can add a logout button if needed)
         function logout() {
             localStorage.removeItem('admin_logged_in');
             location.reload();
         }
 
-        // Add logout button to the page
         window.addEventListener('load', function() {
             if (localStorage.getItem('admin_logged_in') === 'true') {
                 const logoutBtn = document.createElement('button');
